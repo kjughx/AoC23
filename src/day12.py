@@ -1,46 +1,51 @@
 #!/bin/env python3
-import math # factorial
-import re
 
 lines = [line.strip() for line in open("../inputs/day12").readlines()]
 
+seen = {}
+def f(springs, sizes, block = False):
+    if len(springs) == 0:
+        return sum(sizes) == 0
 
-def f(l, s, i, gi, c):
-    print(l, s, i, gi, c)
-    if i == len(l):
-        if gi != len(s):
-            return 0
+    if sum(sizes) == 0:
+        return '#' not in springs
+
+    s = (springs, sizes)
+    if s in seen:
+        return seen[s]
+
+    ret = 0
+    if springs[0] in '.?':
+        if block:
+            if sizes[0] == 0:
+                ret += f(springs[1:], sizes[1:], False)
         else:
-            return 1
+            ret += f(springs[1:], sizes, False)
 
-    if l[i] == '.':
-        if c > 0:  # end of group
-            return f(l, s, i + 1, gi + 1, 0)
-        return f(l, s, i + 1, gi, 0)
+    if springs[0] in '#?':
+        if sizes[0] > 0:
+            ret += f(springs[1:], (sizes[0] - 1, *sizes[1:]), True)
 
-    if l[i] == '#':
-        if c < s[gi]:
-            return f(l, s, i + 1, gi, c + 1)
-        return 0
-
-    # Try both '.' and '#'
-    l[i] = '1'
-    dots = f(l, s, i + 1, gi + (1 if c else 0), False)
-
-    l[i] = '2'
-    hashes = 0
-    if c < s[gi]:
-        hashes = f(l, s, i + 1, gi, c + 1)
+    seen[s] = ret
+    return ret
 
 
-    return dots + hashes
+# part 1: 7732
+# t = 0
+# for line in lines:
+#     springs, sizes = line.split(" ")
+#     sizes = list(map(int, sizes.split(",")))
+#     t += f(springs, sizes)
+# print(t)
 
-    # return f(l, s, i + 1, gi + (1 if g else 0), False) + f(l, s, i + 1, gi, True)
-
-
+# part2:
 t = 0
-for line in [lines[0]]:
+for i, line in enumerate(lines):
     springs, sizes = line.split(" ")
-    sizes = list(map(int, sizes.split(",")))
-    t += f(list(springs), sizes, 0, 0, False)
+    sizes = tuple(map(int, sizes.split(",")))
+    springs = "?".join([springs for _ in range(5)])
+    t += f(springs, 5*sizes)
+
+    seen = {}
+# 3277341243133 too low
 print(t)
