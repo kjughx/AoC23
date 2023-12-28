@@ -10,8 +10,8 @@ for wf in workflows.split('\n'):
 
 t = 0
 for start in starts.split('\n')[:-1]:
-    x,m,a,s = map(int, re.findall(r"\d+", start))
-    
+    x, m, a, s = map(int, re.findall(r"\d+", start))
+
     rule = "in"
     while rule not in "AR":
         if rule in rules:
@@ -19,48 +19,50 @@ for start in starts.split('\n')[:-1]:
 
         cond, rule = rule.split(':', 1)
         if eval(cond):
-            rule,_ = rule.split(',', 1)
+            rule,  _ = rule.split(',', 1)
         else:
-            _,rule = rule.split(',', 1)
+            _, rule = rule.split(',', 1)
     if rule == 'A':
         t += x + m + a + s
-# print(t)
+print(t)
 
 
 from collections import deque
+import math
 
-wfs = deque([("in", ((0, 4000), (0, 4000), (0, 4000), (0, 4000)))])
+wfs = deque([("in", {'x': (1, 4000), 'm': (1, 4000), 'a': (1, 4000), 's': (1, 4000)})])
 
+t = 0
+i = 0
 while wfs:
-    rule, (x, m, a, s) = wfs.popleft()
+    i += 1
+    rule, xmas = wfs.popleft()
     if rule in rules:
         rule = rules[rule]
-    
+
+    if rule in 'AR':
+        if rule == 'A':
+            p = 1
+            for lo, hi in xmas.values():
+                p *= (hi - lo) + 1
+            t += p
+        continue
+
     cond, rule = rule.split(':', 1)
-    if '>' in cond:
-        val = int(cond[2:].split(':')[0])
-        print(val)
-    if '<' in cond:
-        val = int(cond[2:].split(':')[0])
-        branch_true, branch_false = rule.split(',', 1)
-        if cond[0] == 'x':
-            if x[0] < val:
-                wfs.append((branch_true, ((x[0], val - 1), m, a, s)))
-            if x[1] >= val:
-                wfs.append((branch_false, ((val, x[1]), m, a, s)))
-        if cond[0] == 'm':
-            if m[0] < val:
-                wfs.append((branch_true, (x, (m[0], val - 1), a, s)))
-            if m[1] >= val:
-                wfs.append((branch_false, (x, (val, m[1]), a, s)))
-        if cond[0] == 'a':
-            if a[0] < val:
-                wfs.append((branch_true, (x, m, (a[0], val - 1), s)))
-            if a[1] >= val:
-                wfs.append((branch_false, (x, m, (val, a[1]), s)))
-        if cond[0] == 's':
-            if s[0] < val:
-                wfs.append((branch_true, (x, m, a, (s[0], val - 1))))
-            if s[1] >= val:
-                wfs.append((branch_false, (x, m, a, (val, s[1]))))
-print(wfs)
+
+    rule = rule.split(',', 1)
+    k, c, v = cond[0], cond[1], int(cond[2:])
+
+    if c == '<':
+        true = (rule[0], {**xmas, k: (xmas[k][0], min(xmas[k][1], v - 1))})
+        false = (rule[1], {**xmas, k: (max(xmas[k][0], v), xmas[k][1])})
+    else:
+        true = (rule[0], {**xmas, k: (max(xmas[k][0], v + 1), xmas[k][1])})
+        false = (rule[1], {**xmas, k: (xmas[k][0], min(xmas[k][1], v))})
+
+    if true[1][k][0] <= true[1][k][1]:
+        wfs.append(true)
+    if false[1][k][0] <= false[1][k][1]:
+        wfs.append(false)
+
+print(t)
